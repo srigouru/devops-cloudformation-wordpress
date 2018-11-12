@@ -49,6 +49,8 @@ Resources:
       InstanceType: !Ref InstanceType
       KeyName: !Ref KeyName
       SubnetId: !Ref SubnetId
+      SecurityGroups:
+        - !Ref InstanceSecurityGroup
       ImageId: !FindInMap
         - AWSRegionArch2AMI
         - !Ref 'AWS::Region'
@@ -75,11 +77,11 @@ Resources:
   InstanceSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: Enable SSH access via port 22
+      GroupDescription: Enable access from a specific location
       SecurityGroupIngress:
         - IpProtocol: tcp
-          FromPort: '22'
-          ToPort: '22'
+          FromPort: '-1'
+          ToPort: '-1'
           CidrIp: !Ref SSHLocation
 Outputs:
   InstanceId:
