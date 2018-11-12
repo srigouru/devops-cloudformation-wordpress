@@ -60,19 +60,14 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           sudo su
-          echo "Testing Userdata 2" > /home/centos/userdata
-          #yum update -y > log1
-          echo "done yum 1" > /home/centos/userdata1
-          yum install epel-release -y > log2
-          echo "done yum 2" > /home/centos/userdata2
-          yum install -y ansible git > log3
-          echo "done yum 3" > /home/centos/userdata3
-          echo "localhost ansible_connection=local" > /etc/ansible/hosts
-          echo "done yum 4" > /home/centos/userdata4
-          ansible-pull -U https://github.com/srigouru/ansible-role-mariadb --connection=local tasks/main.yml > log5
-          echo "done mysql" > /home/centos/userdata5
-          ansible-pull -U https://github.com/srigouru/ansible-wp-repo --connection=local tasks/main.yml > log6
-          echo "done wordpress" > /home/centos/userdata6
+          #yum update -y
+          yum install epel-release -y
+          yum install -y ansible git
+          echo "localhost ansible_connection=local" > /etc/ansible/hosts    
+          ansible-pull -U https://github.com/srigouru/ansible-role-mariadb --connection=local tasks/main.yml
+          
+          ansible-pull -U https://github.com/srigouru/ansible-wp-repo --connection=local tasks/main.yml
+          echo "done wordpress" > /home/centos/logwp
       Tags:
         - Key: Name
           Value: !Ref Name
