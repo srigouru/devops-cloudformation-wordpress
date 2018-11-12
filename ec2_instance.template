@@ -1,0 +1,107 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: >-
+  AWS CloudFormation Sample Template EC2InstanceWithSecurityGroupSample: Create
+  an Amazon EC2 instance running the Amazon Linux AMI. The AMI is chosen based
+  on the region in which the stack is run. This example creates an EC2 security
+  group for the instance to give you SSH access. **WARNING** This template
+  creates an Amazon EC2 instance. You will be billed for the AWS resources used
+  if you create a stack from this template.
+Parameters:
+  KeyName:
+    Description: Name of an existing EC2 KeyPair to enable SSH access to the instance
+    Type: 'AWS::EC2::KeyPair::KeyName'
+    ConstraintDescription: must be the name of an existing EC2 KeyPair.
+  Name:
+    Description: Name of the instance
+    Type: String
+  SubnetId:
+    Description: Name of an existing VPC subnetId
+    Type: String
+  InstanceType:
+    Description: WebServer EC2 instance type
+    Type: String
+    Default: t2.small
+    AllowedValues:
+      - t2.micro
+      - t2.small
+    ConstraintDescription: must be a valid EC2 instance type.
+  SSHLocation:
+    Description: The IP address range that can be used to SSH to the EC2 instances
+    Type: String
+    MinLength: '9'
+    MaxLength: '18'
+    Default: 0.0.0.0/0
+    AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+    ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+Mappings:
+  AWSInstanceType2Arch:
+    t2.micro:
+      Arch: HVM64
+    t2.small:
+      Arch: HVM64
+  AWSRegionArch2AMI:
+    us-east-1:
+      HVM64: ami-9721caed
+Resources:
+  EC2Instance:
+    Type: 'AWS::EC2::Instance'
+    Properties:
+      InstanceType: !Ref InstanceType
+      KeyName: !Ref KeyName
+      SubnetId: !Ref SubnetId
+      ImageId: !FindInMap
+        - AWSRegionArch2AMI
+        - !Ref 'AWS::Region'
+        - !FindInMap
+          - AWSInstanceType2Arch
+          - !Ref InstanceType
+          - Arch
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          sudo su
+          echo "Testing Userdata 2" > /home/centos/userdata
+          #yum update -y > log1
+          echo "done yum 1" > /home/centos/userdata1
+          yum install epel-release -y > log2
+          echo "done yum 2" > /home/centos/userdata2
+          yum install -y ansible git > log3
+          echo "done yum 3" > /home/centos/userdata3
+          echo "localhost ansible_connection=local" > /etc/ansible/hosts
+          echo "done yum 4" > /home/centos/userdata4
+          ansible-pull -U https://github.com/srigouru/ansible-role-mariadb --connection=local tasks/main.yml > log5
+          echo "done mysql" > /home/centos/userdata5
+          ansible-pull -U https://github.com/srigouru/ansible-wp-repo --connection=local tasks/main.yml > log6
+          echo "done wordpress" > /home/centos/userdata6
+      Tags:
+        - Key: Name
+          Value: !Ref Name
+
+  InstanceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: Enable SSH access via port 22
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: '22'
+          ToPort: '22'
+          CidrIp: !Ref SSHLocation
+Outputs:
+  InstanceId:
+    Description: InstanceId of the newly created EC2 instance
+    Value: !Ref EC2Instance
+  AZ:
+    Description: Availability Zone of the newly created EC2 instance
+    Value: !GetAtt
+      - EC2Instance
+      - AvailabilityZone
+  PublicDNS:
+    Description: Public DNSName of the newly created EC2 instance
+    Value: !GetAtt
+      - EC2Instance
+      - PublicDnsName
+  PublicIP:
+    Description: Public IP address of the newly created EC2 instance
+    Value: !GetAtt
+      - EC2Instance
+      - PublicIp
