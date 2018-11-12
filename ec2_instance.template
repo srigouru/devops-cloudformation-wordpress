@@ -60,14 +60,14 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           sudo su
+          echo "starting deploy wordpress" > /home/centos/log_userdata.txt
           #yum update -y
           yum install epel-release -y
           yum install -y ansible git
-          echo "localhost ansible_connection=local" > /etc/ansible/hosts    
+          echo "localhost ansible_connection=local" > /etc/ansible/hosts
           ansible-pull -U https://github.com/srigouru/ansible-role-mariadb --connection=local tasks/main.yml
-          
           ansible-pull -U https://github.com/srigouru/ansible-wp-repo --connection=local tasks/main.yml
-          echo "done wordpress" > /home/centos/logwp
+          echo "done wordpress" >> /home/centos/log_userdata.txt
       Tags:
         - Key: Name
           Value: !Ref Name
