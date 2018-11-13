@@ -30,6 +30,15 @@ Parameters:
         Description: Please enter the IP range (CIDR notation) for the private subnet in the second Availability Zone
         Type: String
         Default: 10.192.21.0/24
+    FromLocation:
+        Description: The IP address range that can be used to connect to the EC2 instances
+        Type: String
+        MinLength: '9'
+        MaxLength: '18'
+        Default: 47.184.19.57/32
+        AllowedPattern: '(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})/(\d{1,2})'
+        ConstraintDescription: must be a valid IP CIDR range of the form x.x.x.x/x.
+
 Resources:
     VPC:
         Type: AWS::EC2::VPC
@@ -192,6 +201,18 @@ Resources:
             GroupDescription: "Security group with no ingress rule"
             VpcId: !Ref VPC
 
+    InstanceSecurityGroup:
+        Type: 'AWS::EC2::SecurityGroup'
+        Properties:
+            GroupName: "fixed-ip-sg"
+            GroupDescription: Enable access from a specific location
+            VpcId: !Ref VPC
+            SecurityGroupIngress:
+            - IpProtocol: "-1"
+              FromPort: "-1"
+              ToPort: "-1"
+              CidrIp: !Ref FromLocation
+
 Outputs:
 
     VPC:
@@ -227,4 +248,10 @@ Outputs:
     NoIngressSecurityGroup:
         Description: Security group with no ingress rule
         Value: !Ref NoIngressSecurityGroup
+
+    InstanceSecurityGroup:
+        Description: Security group with ingress rule from specific CIDR
+        Value: !Ref InstanceSecurityGroup
+        Export:
+            Name: 'InstanceSecurityGroup'
 
